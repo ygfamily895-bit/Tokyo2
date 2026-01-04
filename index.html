@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Niji Trip 2026 🌈</title>
+  <meta name="theme-color" content="#ffcf8f"/>
+
+<style>
+/* ===============================
+   基本變數 / Reset
+================================ */
+:root{
+  --bg:#fce0b3;
+  --card:#fff7e8;
+  --soft:#eaf6ff;
+  --chip:#fff6e5;
+  --chipOn:#ffffff;
+  --brown:#7a4a26;
+  --brown2:#a26b3a;
+  --border:rgba(186,140,91,.35);
+  --shadow:0 2px 8px rgba(0,0,0,.08);
+  --r1:18px;
+  --r2:24px;
+  --pill:999px;
+  --btn:#ffd59a;
+  --btn2:#ffb85c;
+  --danger:#ffb0a6;
+  --focus: rgba(255,184,92,.85);
+}
+*{box-sizing:border-box;}
+html,body{
+  margin:0;
+  font-family:system-ui,-apple-system,"Noto Sans TC","PingFang TC",sans-serif;
+  background:var(--bg);
+  color:var(--brown);
+}
+
+/* ===============================
+   Layout
+================================ */
+.page{max-width:980px;margin:0 auto;padding:14px 12px 96px;}
+header{
+  background:var(--card);
+  border-radius:26px;
+  padding:16px 14px 14px;
+  box-shadow:var(--shadow);
+  margin-bottom:12px;
+}
+.titleRow{display:flex;align-items:center;gap:10px;}
+.titleRow h1{margin:0;font-size:26px;font-weight:1000}
+.desc textarea{
+  width:100%;
+  border:1px dashed rgba(122,74,38,.22);
+  background:#fffdf6;
+  border-radius:14px;
+  padding:10px 12px;
+  resize:vertical;
+}
+
+/* ===============================
+   Day Nav（重點修改區）
+================================ */
+.sticky{
+  position:sticky;
+  top:0;
+  z-index:30;
+  padding-top:10px;
+  background:linear-gradient(to bottom, rgba(252,224,179,.97), rgba(252,224,179,.74), rgba(252,224,179,0));
+  backdrop-filter: blur(6px);
+}
+
+.dayNav{
+  background:var(--soft);
+  border-radius:24px;
+  padding:10px;
+  display:flex;
+  gap:10px;
+  overflow-x:auto;
+  box-shadow:var(--shadow);
+}
+
+.dayChip{
+  flex:0 0 auto;
+  min-width:92px;
+  max-width:120px;              /* ✅ 寬度固定上限 */
+  background:var(--chip);
+  border-radius:var(--r2);
+  padding:8px 10px;
+  box-shadow:var(--shadow);
+  cursor:pointer;
+}
+
+.dayChip.active{
+  background:var(--chipOn);
+  border:1px solid rgba(122,74,38,.25);
+}
+
+/* ✅ Day Chip 標題（可編輯、不變高、省略號） */
+.dayChip .t{
+  font-weight:1000;
+  font-size:15px;
+  line-height:1.2;
+  height:18px;                 /* 固定高度 */
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  outline:none;
+}
+
+/* 日期列 */
+.dayChip .s{
+  font-size:12px;
+  color:var(--brown2);
+  line-height:1.2;
+  height:14px;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  outline:none;
+}
+
+/* ===============================
+   其他樣式（保留原功能）
+================================ */
+.daySection{margin:14px 0;}
+.dayCard{
+  background:var(--soft);
+  border-radius:28px;
+  padding:12px;
+  box-shadow:var(--shadow);
+}
+.pill input{
+  border:none;
+  background:transparent;
+  font-size:18px;
+  font-weight:1000;
+}
+.card{background:var(--card);border-radius:18px;padding:12px;margin-bottom:10px;}
+textarea{width:100%;}
+</style>
+</head>
+
+<body>
+<div class="page" id="appRoot">
+
+<header>
+  <div class="titleRow">
+    <h1>Niji Trip 2026</h1>
+    <span>🌈</span>
+  </div>
+  <div class="desc">
+    <textarea id="appDesc" placeholder="行程描述"></textarea>
+  </div>
+</header>
+
+<div class="sticky">
+  <div class="dayNav" id="dayNav"></div>
+</div>
+
+<div id="daysContainer"></div>
+
+</div>
+
+<script>
+/* ===============================
+   Day Nav Rendering（重點）
+================================ */
+const state = {
+  days:[
+    {id:"d1", dayLabel:"Day 1 東京", dateText:"5/8"},
+    {id:"d2", dayLabel:"Day 2 秋葉原超長超長測試文字", dateText:"5/9"},
+    {id:"d3", dayLabel:"Day 3", dateText:"5/10"}
+  ]
+};
+
+let activeDayId = "d1";
+let lastTypingAt = 0;
+function markTyping(){ lastTypingAt = Date.now(); }
+
+function renderDayNav(){
+  const nav = document.getElementById("dayNav");
+  nav.innerHTML = "";
+
+  state.days.forEach(d=>{
+    const chip = document.createElement("div");
+    chip.className = "dayChip" + (d.id===activeDayId?" active":"");
+    chip.dataset.id = d.id;
+
+    chip.innerHTML = `
+      <div class="t" contenteditable="true"></div>
+      <div class="s" contenteditable="true"></div>
+    `;
+
+    const t = chip.querySelector(".t");
+    const s = chip.querySelector(".s");
+
+    t.textContent = d.dayLabel;
+    s.textContent = d.dateText;
+
+    /* 點 chip 才跳 Day，編輯時不跳 */
+    chip.addEventListener("click",(e)=>{
+      if(e.target.isContentEditable) return;
+      activeDayId = d.id;
+      renderDayNav();
+    });
+
+    t.addEventListener("input",()=>{
+      markTyping();
+      d.dayLabel = t.textContent.trim() || d.dayLabel;
+    });
+
+    s.addEventListener("input",()=>{
+      markTyping();
+      d.dateText = s.textContent.trim() || d.dateText;
+    });
+
+    nav.appendChild(chip);
+  });
+}
+
+renderDayNav();
+</script>
+
+</body>
+</html>
