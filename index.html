@@ -689,12 +689,21 @@ function renderBudgets() {
     if (!val || val <= 0) { input.value = rate.toFixed(3); return; }
     if (!DATA.meta) DATA.meta = {};
     DATA.meta.customRate = val;
-    // also sync to currency panel if open
+    // sync to currency panel if open
     const ri = document.getElementById('rateInput');
     if (ri) ri.value = val;
+    // recalculate all budgetTwd from budgetJpy using new rate
+    DATA.days.forEach(day => {
+      (day.stops||[]).forEach(s => {
+        if (s.budget != null) {
+          s.budgetTwd = Math.round(Number(s.budget) * val);
+        } else if (s.budgetTwd != null) {
+          s.budget = Math.round(Number(s.budgetTwd) / val);
+        }
+      });
+    });
     scheduleSave();
-    renderBudgets();
-    // flash saved indicator
+    render();
     const saved = document.getElementById('inlineRateSaved');
     if (saved) { saved.style.opacity='1'; setTimeout(()=>saved.style.opacity='0', 1500); }
   });
